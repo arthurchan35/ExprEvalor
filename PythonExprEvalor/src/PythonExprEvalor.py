@@ -5,7 +5,7 @@
 #<term> : <factor> {(* | /)<term>}
 #<factor> : ID | INT_CONST | ( <expr> )
 import sys
-
+import math
 class PythonExprEvalor:
 	#y_expr
 	#x_val
@@ -30,43 +30,43 @@ class PythonExprEvalor:
 		if (self.y_expr[self.index] == 's' and self.y_expr[self.index + 1] == 'i' and
 			self.y_expr[self.index + 2] == 'n' and self.y_expr[self.index + 3] == '('):
 			self.index += 3
-			result = parenthOp()
+			result = self.parenthOp()
 			return math.sin(result)
 
 		if (self.y_expr[self.index] == 'c' and self.y_expr[self.index + 1] == 'o' and
 			self.y_expr[self.index + 2] == 's' and self.y_expr[self.index + 3] == '('):
 			self.index += 3
-			result = parenthOp()
+			result = self.parenthOp()
 			return math.cos(result)		
 
 		if (self.y_expr[self.index] == 't' and self.y_expr[self.index + 1] == 'a' and
 			self.y_expr[self.index + 2] == 'n' and self.y_expr[self.index + 3] == '('):
 			self.index += 3
-			result = parenthOp()
+			result = self.parenthOp()
 			return math.tan(result)
 
 		if (self.y_expr[self.index] == 'l' and self.y_expr[self.index + 1] == 'n' and
 			self.y_expr[self.index + 2] == '('):
 			self.index += 2
-			result = parenthOp()
+			result = self.parenthOp()
 			return math.log(result)
 
 		if (self.y_expr[self.index] == 'a' and self.y_expr[self.index + 1] == 't' and
 			self.y_expr[self.index + 2] == 'a' and self.y_expr[self.index + 3] == 'n' and
 			self.y_expr[self.index + 4] == '2' and self.y_expr[self.index + 5] == '('):
 			self.index += 5
-			result = parenthOp2()
+			result = self.parenthOp2()
 			return math.atan2(result[0], result[1])
 
 		if (self.y_expr[self.index] == 'a' and self.y_expr[self.index + 1] == 't' and
 			self.y_expr[self.index + 2] == 'a' and self.y_expr[self.index + 3] == 'n' and
 			self.y_expr[self.index + 4] == '('):
 			self.index += 4
-			result = parenthOp()
+			result = self.parenthOp()
 			return math.atan(result)
 
 		if (self.y_expr[self.index] == '('):
-			return parenthOp()
+			return self.parenthOp()
 
 		num = ""
 		result = 0.0
@@ -79,7 +79,8 @@ class PythonExprEvalor:
 		try:	
 			result = float(num)
 		except ValueError:
-			print "not a value"
+			print "at index of " + str(self.index)
+			print "not a value" + num
 			sys.exit(-1)
 
 		self.wsSkip()
@@ -89,14 +90,14 @@ class PythonExprEvalor:
 		result = []
 		self.index += 1
 		self.parenthesis.append('(')
-		result.append(expr())
+		result.append(self.expr())
 		self.wsSkip()
 		if (self.index == self.length or self.y_expr[self.index] != ','):
 			sys.exit(-1)
 
 		self.index += 1
 		self.wsSkip()
-		result.append(expr())
+		result.append(self.expr())
 		self.wsSkip()
 		if (self.index == self.length or self.y_expr[self.index] != ')' or
 			not self.parenthesis or self.parenthesis.pop() != '(') :
@@ -135,29 +136,31 @@ class PythonExprEvalor:
 		result = self.pow()
 		while (self.index < self.length and (self.y_expr[self.index] == '*' or self.y_expr[self.index] == '/')):
 			if (self.y_expr[self.index] == '*'):
+				self.index += 1
 				result *= self.pow()
 			else:
+				self.index += 1
 				try:
 					result /= self.pow()
 				except ValueError:
 					print "divided by zero"
 					sys.exit(-1)
-			self.index += 1
 		return result			
 
 	def expr(self):
 		result = self.term()
 		while (self.index < self.length and (self.y_expr[self.index] == '+' or self.y_expr[self.index] == '-')):
 			if (self.y_expr[self.index] == '+'):
+				self.index += 1
 				result += self.term()
 			else:
+				self.index += 1
 				result -= self.term()
-			self.index += 1
 		return result
 
 while (True):	
-	y_expr = input('Y = ? ')
-	x_val = input('X ? ')
+	y_expr = input("Y = ? ")
+	x_val = input("X ? ")
 
 	pee = PythonExprEvalor(y_expr, x_val)
 	result = pee.expr()

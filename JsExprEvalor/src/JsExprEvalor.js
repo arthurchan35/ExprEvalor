@@ -86,7 +86,7 @@ function JsExprEvalor(y_expr, x_val) {
 
 		this.index++;
 		this.wsSkip();
-		result[1] = expr();
+		result[1] = this.expr();
 		this.wsSkip();
 
 		if (this.index == this.length || this.y_expr.charAt(this.index) != ")" || this.parenthesis.length == 0 || this.parenthesis.pop() != "(") {
@@ -164,7 +164,19 @@ function JsExprEvalor(y_expr, x_val) {
 
 }
 
+var y_expr;
+var x_val;
 
-var myEvalor = new JsExprEvalor("(2+x)*sin(x/4)", 3.1415926);
+function onClick() {
+	y_expr = document.getElementById("y_expr").value;
+	x_val = document.getElementById("x_val").value;
+	var myEvalor = new JsExprEvalor(y_expr, parseFloat(x_val));
+	document.write(myEvalor.expr());
+}
 
-document.write(myEvalor.expr());
+//while (true) {
+	document.write("y = ?");
+	document.write("x ?")
+	onClick();
+
+//}

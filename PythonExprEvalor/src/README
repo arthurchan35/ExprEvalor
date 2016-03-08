@@ -1,0 +1,5 @@
+when prompted to enter string for y = ?
+please add "" to surrund ur input
+eg:
+y = ? "atan(2^(2+x)*atan2(x/4 , 5 - 2 - 1))"
+x ? 3.1415926
