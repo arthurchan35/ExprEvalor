@@ -1,203 +1,137 @@
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 /**
  * Created by arthurchan35 on 2/25/2016.
  *
- * <expr> : <term> {(+ | -)<term>}
- * <term> : <factor> {(* | /)<term>}
- * <factor> : ID | INT_CONST | ( <expr> )
+ * Recursive Descent parser is difficult to handle Left recursion
+ * when it comes to subtraction and division, thus we use EBNF
+ * 
+ * <expr> : <term> <expr>'
+ * 
+ * <expr>' : + <term>
+ *         : - <term>
+ *         :
+ * 
+ * <term> : <pow> <term>'
+ * 
+ * <term>' : * <pow>
+ *         : / <pow>
+ *         :
+ * 
+ * <pow> : <factor> ^ <pow>
+ * 
+ * <factor> : ID
+ *          : INT_CONST
+ *          : (<expr>)
  *
  */
 public class JavaExprEvalor {
 	String y_expr;
 	Double x_val;
-	int index;
-	int length;
-	Stack<Character> parenthesis;
-	JavaExprEvalor(String y_expr, String x_val) {
+
+	int is;
+	int ie;
+
+	String currToken;
+
+	Pattern floatNumber = Pattern.compile("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$");
+
+	private JavaExprEvalor() {}
+
+	public double calculate(String y_expr, String x_val) {
+
+		is = 0;
+		ie = 0;
 		this.y_expr = y_expr;
-		try {
+		if (x_val == null) {
+			x_val = null;
+		}
+		else {
 			this.x_val = Double.parseDouble(x_val);
 		}
-		catch (NumberFormatException e){
-			System.out.println("Invalid input for variable X, please input a number for X.");
-			System.exit(-1);
-		}
-		index = 0;
-		length = y_expr.length();
-		parenthesis = new Stack<>();
+		return expr();
 	}
 
-	private Double expr() {
-		Double result = term();
-
-		while (index < length && (y_expr.charAt(index) == '+' || y_expr.charAt(index) == '-')) {
-			if (y_expr.charAt(index++) == '+') {
-				result += term();
-			}
-			else {
-				result -= term();
-			}
+	private String peekToken() {
+		if (is != ie) {
+			return currToken;
 		}
-		return result;
-	}
-
-	private Double term() {
-		Double result = pow();
-
-		while (index < length && (y_expr.charAt(index) == '*' || y_expr.charAt(index) == '/')) {
-			if (y_expr.charAt(index++) == '*') {
-				result *= pow();
-			}
-			else {
-				try {
-					result /= pow();
-				}
-				catch (ArithmeticException e) {
-					System.out.println("Divisor is 0");
-					System.exit(-1);
-				}
-			}
-		}
-		return result;
-    }
-
-	private Double pow() {
-		Double result = factor();
-		while (index < length && (y_expr.charAt(index) == '^')) {
-			index++;
-			result = Math.pow(result, factor());
-		}
-		return result;
+		wsSkip();
+		
 	}
 
 	private void wsSkip() {
-		while (index < length && (y_expr.charAt(index) == ' ' || y_expr.charAt(index) == '\t'))
-			index++;
+		while (	ie < y_expr.length() &&
+				y_expr.charAt(ie) == ' ' ||
+				y_expr.charAt(ie) == '\t' ||
+				y_expr.charAt(ie) == '\n') {
+			ie++;
+		}
+		is = ie;
 	}
 
-	private Double parenthOp() {
-		index++;
-		parenthesis.push('(');
-		Double result = expr();
-		wsSkip();
-		if (index == length || y_expr.charAt(index) != ')' || parenthesis.empty() || parenthesis.pop() != '(') {
-			System.out.println("Incorrect closing parenthesis at index " + index);
-			System.exit(-1);
-		}
-		index++;
-		wsSkip();
-		return result;
+	private String consumeToken() {
+		
 	}
 
-	private Double[] parenthOp2() {
-		Double[] result = new Double[2];
-		index++;
-		parenthesis.push('(');
-		result[0] = expr();
-		wsSkip();
-		if (index == length || y_expr.charAt(index) != ',') {
-			System.out.println("Missing comma at index " + index);
-			System.exit(-1);
+	private double expr() {
+		double term = term();
+		while (peekToken().equals("+") || peekToken().equals("-")) {
+			String currToken = consumeToken();
+			if (currToken.equals("+")) {
+				term += term();
+			}
+			else {
+				term -= term();
+			}
 		}
-		index++;
-		wsSkip();
-		result[1] = expr();
-		wsSkip();
-		if (index == length || y_expr.charAt(index) != ')' || parenthesis.empty() || parenthesis.pop() != '(') {
-			System.out.println("Incorrect closing parenthesis at index " + index);
-			System.exit(-1);
-		}
-		index++;
-		wsSkip();
-		return result;
+		return term;
 	}
 
-	private Double factor() {
-		wsSkip();
+	private double term() {
+		double pow = pow();
+		while (peekToken().equals("*") || peekToken().equals("/")) {
+			String currToken = consumeToken();
+			if (currToken.equals("*")) {
+				pow *= pow();
+			}
+			else {
+				pow /= pow();
+			}
+		}
+		return pow;
+	}
 
-		if (y_expr.charAt(index) == 'x') {
-			index++;
-			return x_val;
+	//right associativity, right recursive
+	private double pow() {
+		double factor = factor();
+		while (consumeToken().equals("^")) {
+			factor *= pow();
+		}
+		return factor;
+	}
+
+	private double factor() {
+		String currToken = consumeToken();
+		if (currToken.equals("(")) {
+			
+		}
+		if (floatNumber.matcher(currToken).matches()) {
+			return Double.parseDouble(currToken);
+		}
+		if (currToken.equals("x")) {
+			if (this.x_val == null) {
+				throw new IllegalArgumentException("variable " + currToken + " was NOT set to a value before");
+			}
+			return this.x_val;
 		}
 
-		if (y_expr.charAt(index) == 's' && y_expr.charAt(index + 1) == 'i' && y_expr.charAt(index + 2) == 'n' && y_expr.charAt(index + 3) == '(') {
-			index += 3;
-			Double result = parenthOp();
-			return Math.sin(result);
-		}
+		throw new IllegalArgumentException("un-recogonized token: " + currToken);
 
-		if (y_expr.charAt(index) == 'c' && y_expr.charAt(index + 1) == 'o' && y_expr.charAt(index + 2) == 's' && y_expr.charAt(index + 3) == '(') {
-			index += 3;
-			Double result = parenthOp();
-			return Math.cos(result);
-		}
-
-		if (y_expr.charAt(index) == 't' && y_expr.charAt(index + 1) == 'a' && y_expr.charAt(index + 2) == 'n' && y_expr.charAt(index + 3) == '(') {
-			index += 3;
-			Double result = parenthOp();
-			return Math.tan(result);
-		}
-
-		if (y_expr.charAt(index) == 'l' && y_expr.charAt(index + 1) == 'n' && y_expr.charAt(index + 2) == '(') {
-			index += 2;
-			Double result = parenthOp();
-			return Math.log(result);
-		}
-
-		if (y_expr.charAt(index) == 'a' && y_expr.charAt(index + 1) == 't' && y_expr.charAt(index + 2) == 'a' && y_expr.charAt(index + 3) == 'n' && y_expr.charAt(index + 4) == '2' && y_expr.charAt(index + 5) == '(') {
-			index += 5;
-			Double result[] = parenthOp2();
-			return Math.atan2(result[0], result[1]);
-		}
-
-		if (y_expr.charAt(index) == 'a' && y_expr.charAt(index + 1) == 't' && y_expr.charAt(index + 2) == 'a' && y_expr.charAt(index + 3) == 'n' && y_expr.charAt(index + 4) == '(') {
-			index += 4;
-			Double result = parenthOp();
-			return Math.atan(result);
-		}
-
-
-		if (y_expr.charAt(index) == '(')
-			return parenthOp();
-
-		String num = "";
-		Double result = 0.0;
-
-		while (index < length && (y_expr.charAt(index) <= '9' && y_expr.charAt(index) >= '0') || y_expr.charAt(index) == '.')
-			num += y_expr.charAt(index++);
-		try {
-			result = Double.parseDouble(num);
-		}
-		catch (NumberFormatException e) {
-			System.out.println("Invalid number: \"" + num + "\" in expression :" + y_expr);
-			System.exit(-1);
-		}
-
-		wsSkip();
-
-		return result;
 	}
 
 	public static void main (String[] args) {
-		Scanner scanner = new Scanner(System.in);
-
-		while (true) {
-			System.out.println("y = ? ");
-			String y_expr = scanner.nextLine();
-			System.out.println("x ? ");
-			String x_val = scanner.nextLine();
-
-			JavaExprEvalor jee = new JavaExprEvalor(y_expr, x_val);
-			Double result = jee.expr();
-			if (!jee.parenthesis.empty()) {
-				System.out.println("Too few closing parenthesis in expression.");
-				System.exit(-1);
-			}
-			else {
-				System.out.println(result);
-			}
-		}
 	}
 }
