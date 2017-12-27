@@ -22,10 +22,15 @@ import java.util.regex.Pattern;
  * 
  * <pow> : <factor> ^ <pow>
  * 
- * <factor> : ID
+ * <factor> : ID <factor>'
  *          : INT_CONST
  *          : (<expr>)
- *
+ * 
+ * <factor>' : (<args>)  <-- function call, using <factor>' to reduce ambiguity
+ *           :
+ * 
+ * <args> : <expr>, <args>
+ *        : <expr>
  */
 public class JavaExprEvalor {
 	String y_expr;
@@ -58,8 +63,11 @@ public class JavaExprEvalor {
 		if (is != ie) {
 			return currToken;
 		}
+
 		wsSkip();
-		
+		if (y_expr.charAt(ie) == '(' || y_expr.charAt(ie) == ')') {
+			currToken = Character.toString(y_expr.charAt(ie++));
+		}
 	}
 
 	private void wsSkip() {
