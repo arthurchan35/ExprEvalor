@@ -55,6 +55,9 @@ public class JavaExprEvalor {
 		if (symbolTable == null) {
 			symbolTable = new HashMap<String, Double>();
 		}
+		else {
+			symbolTable.clear();
+		}
 		is = 0;
 		ie = 0;
 		return expr();
