@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -41,7 +42,8 @@ public class JavaExprEvalor {
 
 	String currToken;
 
-	Pattern floatNumber = Pattern.compile("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$");
+	Pattern floatNumber = Pattern.compile("^([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
+	Pattern id = Pattern.compile("^([a-z][A-Za-z0-9]*)");
 
 	private JavaExprEvalor() {}
 
@@ -51,7 +53,7 @@ public class JavaExprEvalor {
 		ie = 0;
 		this.y_expr = y_expr;
 		if (x_val == null) {
-			x_val = null;
+			this.x_val = null;
 		}
 		else {
 			this.x_val = Double.parseDouble(x_val);
@@ -65,9 +67,26 @@ public class JavaExprEvalor {
 		}
 
 		wsSkip();
-		if (y_expr.charAt(ie) == '(' || y_expr.charAt(ie) == ')') {
-			currToken = Character.toString(y_expr.charAt(ie++));
+
+		if (y_expr.charAt(ie) == '(' || y_expr.charAt(ie) == ')' ||
+			y_expr.charAt(ie) == '+' || y_expr.charAt(ie) == '-' ||
+			y_expr.charAt(ie) == '*' || y_expr.charAt(ie) == '/' ||
+			y_expr.charAt(ie) == '^' || y_expr.charAt(ie) == ',') {
+			ie++;
 		}
+		else {
+			String rest = y_expr.substring(is);
+			Matcher fnm = floatNumber.matcher(rest);
+			Matcher idm = id.matcher(rest);
+			if (fnm.find()) {
+				ie = fnm.end(1);
+			}
+			else if (idm.find()) {
+				ie = idm.end(1);
+			}
+		}
+		currToken = y_expr.substring(is, ie);
+		return currToken;
 	}
 
 	private void wsSkip() {
@@ -81,7 +100,10 @@ public class JavaExprEvalor {
 	}
 
 	private String consumeToken() {
-		
+		String currToken = peekToken();
+		is = ie;
+		this.currToken = null;
+		return currToken;
 	}
 
 	private double expr() {
@@ -123,8 +145,78 @@ public class JavaExprEvalor {
 
 	private double factor() {
 		String currToken = consumeToken();
+		if (currToken.equals("sin")) {
+			String leftPar = consumeToken();
+			if (!leftPar.equals("(")) {
+				//error
+			}
+			double e = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return Math.sin(e);
+		}
+		if (currToken.equals("cos")) {
+			String leftPar = consumeToken();
+			if (!leftPar.equals("(")) {
+				//error
+			}
+			double e = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return Math.cos(e);
+		}
+		if (currToken.equals("tan")) {
+			String leftPar = consumeToken();
+			if (!leftPar.equals("(")) {
+				//error
+			}
+			double e = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return Math.tan(e);
+		}
+		if (currToken.equals("atan")) {
+			String leftPar = consumeToken();
+			if (!leftPar.equals("(")) {
+				//error
+			}
+			double e = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return Math.atan(e);
+		}
+		if (currToken.equals("atan2")) {
+			String leftPar = consumeToken();
+			if (!leftPar.equals("(")) {
+				//error
+			}
+			double e1 = expr();
+			String comma = consumeToken();
+			if (!comma.equals(",")) {
+				//error
+			}
+			double e2 = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return Math.atan2(e1, e2);
+		}
 		if (currToken.equals("(")) {
-			
+			double e = expr();
+			String rightPar = consumeToken();
+			if (!rightPar.equals(")")) {
+				//error
+			}
+			return e;
 		}
 		if (floatNumber.matcher(currToken).matches()) {
 			return Double.parseDouble(currToken);
