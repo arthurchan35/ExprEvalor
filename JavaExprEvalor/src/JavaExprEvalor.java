@@ -1,3 +1,5 @@
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -34,34 +36,39 @@ import java.util.regex.Pattern;
  *        : <expr>
  */
 public class JavaExprEvalor {
-	String y_expr;
-	Double x_val;
+	static String y_expr;
 
-	int is;
-	int ie;
+	static Map<String, Double> symbolTable;
 
-	String currToken;
+	static int is;
+	static int ie;
 
-	Pattern floatNumber = Pattern.compile("^([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
-	Pattern id = Pattern.compile("^([a-z][A-Za-z0-9]*)");
+	static String currToken;
+
+	final static Pattern floatNumber = Pattern.compile("^([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
+	final static Pattern id = Pattern.compile("^([a-z][A-Za-z0-9]*)");
 
 	private JavaExprEvalor() {}
 
-	public double calculate(String y_expr, String x_val) {
+	public static double calculate() {
 
+		if (symbolTable == null) {
+			symbolTable = new HashMap<String, Double>();
+		}
 		is = 0;
 		ie = 0;
-		this.y_expr = y_expr;
-		if (x_val == null) {
-			this.x_val = null;
-		}
-		else {
-			this.x_val = Double.parseDouble(x_val);
-		}
 		return expr();
 	}
 
-	private String peekToken() {
+	public void setExpression(String y_expr) {
+		JavaExprEvalor.y_expr = y_expr;
+	}
+
+	public void setUserVariable(String x, double v) {
+		symbolTable.put(x, v);
+	}
+
+	private static String peekToken() {
 		if (is != ie) {
 			return currToken;
 		}
@@ -89,7 +96,7 @@ public class JavaExprEvalor {
 		return currToken;
 	}
 
-	private void wsSkip() {
+	private static void wsSkip() {
 		while (	ie < y_expr.length() &&
 				y_expr.charAt(ie) == ' ' ||
 				y_expr.charAt(ie) == '\t' ||
@@ -99,14 +106,14 @@ public class JavaExprEvalor {
 		is = ie;
 	}
 
-	private String consumeToken() {
+	private static String consumeToken() {
 		String currToken = peekToken();
 		is = ie;
-		this.currToken = null;
+		JavaExprEvalor.currToken = null;
 		return currToken;
 	}
 
-	private double expr() {
+	private static double expr() {
 		double term = term();
 		while (peekToken().equals("+") || peekToken().equals("-")) {
 			String currToken = consumeToken();
@@ -120,7 +127,7 @@ public class JavaExprEvalor {
 		return term;
 	}
 
-	private double term() {
+	private static double term() {
 		double pow = pow();
 		while (peekToken().equals("*") || peekToken().equals("/")) {
 			String currToken = consumeToken();
@@ -135,7 +142,7 @@ public class JavaExprEvalor {
 	}
 
 	//right associativity, right recursive
-	private double pow() {
+	private static double pow() {
 		double factor = factor();
 		while (consumeToken().equals("^")) {
 			factor *= pow();
@@ -143,7 +150,7 @@ public class JavaExprEvalor {
 		return factor;
 	}
 
-	private double factor() {
+	private static double factor() {
 		String currToken = consumeToken();
 		if (currToken.equals("sin")) {
 			String leftPar = consumeToken();
@@ -221,11 +228,11 @@ public class JavaExprEvalor {
 		if (floatNumber.matcher(currToken).matches()) {
 			return Double.parseDouble(currToken);
 		}
-		if (currToken.equals("x")) {
-			if (this.x_val == null) {
+		if (id.matcher(currToken).matches()) {
+			if (!symbolTable.containsKey(currToken)) {
 				throw new IllegalArgumentException("variable " + currToken + " was NOT set to a value before");
 			}
-			return this.x_val;
+			return symbolTable.get(currToken);
 		}
 
 		throw new IllegalArgumentException("un-recogonized token: " + currToken);
