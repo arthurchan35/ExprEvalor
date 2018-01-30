@@ -133,7 +133,6 @@ public class JavaExprEvalor {
 	private static double term() {
 		double pow = pow();
 		while (peekToken().equals("*") || peekToken().equals("/")) {
-			String currToken = consumeToken();
 			if (currToken.equals("*")) {
 				pow *= pow();
 			}
@@ -243,5 +242,16 @@ public class JavaExprEvalor {
 	}
 
 	public static void main (String[] args) {
+		Scanner scanner = new Scanner(System.in);
+
+		while (true) {
+			System.out.println("Input your expression: ");
+			String expression = scanner.nextLine();
+			if (expression.toLowerCase().contains("quit") || expression.toLowerCase().contains("exit")) {
+				System.exit(0);
+			}
+			JavaExprEvalor.setExpression(expression);
+			System.out.println("The result is: " + JavaExprEvalor.calculate());
+		}
 	}
 }
