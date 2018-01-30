@@ -89,10 +89,10 @@ public class JavaExprEvalor {
 			Matcher fnm = floatNumber.matcher(rest);
 			Matcher idm = id.matcher(rest);
 			if (fnm.find()) {
-				ie = fnm.end(1);
+				ie += fnm.end(1);
 			}
 			else if (idm.find()) {
-				ie = idm.end(1);
+				ie += idm.end(1);
 			}
 		}
 		currToken = y_expr.substring(is, ie);
@@ -133,6 +133,7 @@ public class JavaExprEvalor {
 	private static double term() {
 		double pow = pow();
 		while (peekToken().equals("*") || peekToken().equals("/")) {
+			String currToken = consumeToken();
 			if (currToken.equals("*")) {
 				pow *= pow();
 			}
