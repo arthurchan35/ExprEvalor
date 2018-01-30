@@ -146,7 +146,8 @@ public class JavaExprEvalor {
 	//right associativity, right recursive
 	private static double pow() {
 		double factor = factor();
-		while (consumeToken().equals("^")) {
+		while (peekToken().equals("^")) {
+			consumeToken();
 			factor *= pow();
 		}
 		return factor;
