@@ -72,6 +72,9 @@ public class JavaExprEvalor {
 	}
 
 	private static String peekToken() {
+		if (ie >= y_expr.length() || is >= y_expr.length()) {
+			return "EOF";
+		}
 		if (is != ie) {
 			return currToken;
 		}
