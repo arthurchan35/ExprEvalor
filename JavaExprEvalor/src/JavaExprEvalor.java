@@ -63,11 +63,11 @@ public class JavaExprEvalor {
 		return expr();
 	}
 
-	public void setExpression(String y_expr) {
+	public static void setExpression(String y_expr) {
 		JavaExprEvalor.y_expr = y_expr;
 	}
 
-	public void setUserVariable(String x, double v) {
+	public static void setUserVariable(String x, double v) {
 		symbolTable.put(x, v);
 	}
 
