@@ -152,7 +152,7 @@ public class JavaExprEvalor {
 		double factor = factor();
 		while (peekToken().equals("^")) {
 			consumeToken();
-			factor *= pow();
+			factor = Math.pow(factor, pow());
 		}
 		return factor;
 	}
